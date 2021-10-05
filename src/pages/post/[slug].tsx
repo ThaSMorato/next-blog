@@ -1,4 +1,14 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { GetStaticPaths, GetStaticProps } from 'next';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import Prismic from '@prismicio/client';
+
+import { AiOutlineCalendar } from 'react-icons/ai';
+import { FiClock, FiUser } from 'react-icons/fi';
+import Header from '../../components/Header';
 
 import { getPrismicClient } from '../../services/prismic';
 
@@ -26,20 +36,98 @@ interface PostProps {
   post: Post;
 }
 
-// export default function Post() {
-//   // TODO
-// }
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export default function Post({ post }: PostProps) {
+  const router = useRouter();
 
-// export const getStaticPaths = async () => {
-//   const prismic = getPrismicClient();
-//   const posts = await prismic.query(TODO);
+  if (router.isFallback) {
+    return <p>Carregando...</p>;
+  }
 
-//   // TODO
-// };
+  const getReadTime = (): number => {
+    const normalPeopleWordsPerMinute = 200;
+    const totalWorldsArray = post.data.content.reduce((acc, content) => {
+      const totalWorldsContentBody = content.body.reduce(
+        (accumulator, body) => [...accumulator, ...body.text.split(' ')],
+        []
+      );
+      return [...acc, ...totalWorldsContentBody, ...content.heading.split(' ')];
+    }, []);
 
-// export const getStaticProps = async context => {
-//   const prismic = getPrismicClient();
-//   const response = await prismic.getByUID(TODO);
+    return Math.round(totalWorldsArray.length / normalPeopleWordsPerMinute);
+  };
 
-//   // TODO
-// };
+  return (
+    <>
+      <Head>
+        <title>Spacetraveling | {post.data.title} </title>
+      </Head>
+      <Header />
+      <main className={styles.post__main}>
+        <picture>
+          <img src={post.data.banner.url} alt={post.data.title} />
+        </picture>
+        <article className={commonStyles.container}>
+          <h1 className={commonStyles.title}>{post.data.title}</h1>
+          <span className={commonStyles.info}>
+            <AiOutlineCalendar fontSize={20} />
+            {format(new Date(post.first_publication_date), 'dd MMM yyyy', {
+              locale: ptBR,
+            })}
+            <FiUser fontSize={20} />
+            {post.data.author}
+            <FiClock fontSize={20} />
+            {getReadTime()} min
+          </span>
+
+          <div className={styles.content}>
+            {post.data.content.map(content => (
+              <div key={content.heading}>
+                <h2 className={commonStyles.title}>{content.heading}</h2>
+                {content.body.map(({ text }) => (
+                  <p key={text} className={commonStyles.info}>
+                    {text}
+                  </p>
+                ))}
+              </div>
+            ))}
+          </div>
+        </article>
+      </main>
+    </>
+  );
+}
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const prismic = getPrismicClient();
+  const posts = await prismic.query(
+    [Prismic.predicates.at('document.type', 'posts')],
+    {
+      fetch: [],
+      pageSize: 2,
+    }
+  );
+
+  // TODO
+
+  return {
+    paths: posts.results.map(res => ({ params: { slug: res.uid } })),
+    fallback: true,
+  };
+};
+
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  const prismic = getPrismicClient();
+
+  const { slug } = params;
+
+  const post = await prismic.getByUID('posts', String(slug), {});
+
+  return {
+    props: {
+      post,
+    },
+    revalidate: 5 * 60,
+  };
+  // TODO
+};
