@@ -64,15 +64,17 @@ export default function Home({ postsPagination }: HomeProps) {
                 <p className={commonStyles.subtitle}>{post.data.subtitle}</p>
                 <span className={commonStyles.info}>
                   <AiOutlineCalendar fontSize={20} />
-                  {format(
-                    new Date(post.first_publication_date),
-                    'dd MMM yyyy',
-                    {
-                      locale: ptBR,
-                    }
-                  )}
+                  <span className={commonStyles.info}>
+                    {format(
+                      new Date(post.first_publication_date),
+                      'dd MMM yyyy',
+                      {
+                        locale: ptBR,
+                      }
+                    )}
+                  </span>
                   <FiUser fontSize={20} />
-                  {post.data.author}
+                  <span className={commonStyles.info}>{post.data.author}</span>
                 </span>
               </a>
             </Link>

@@ -54,7 +54,7 @@ export default function Post({ post }: PostProps) {
       return [...acc, ...totalWorldsContentBody, ...content.heading.split(' ')];
     }, []);
 
-    return Math.round(totalWorldsArray.length / normalPeopleWordsPerMinute);
+    return Math.ceil(totalWorldsArray.length / normalPeopleWordsPerMinute);
   };
 
   return (
@@ -71,13 +71,15 @@ export default function Post({ post }: PostProps) {
           <h1 className={commonStyles.title}>{post.data.title}</h1>
           <span className={commonStyles.info}>
             <AiOutlineCalendar fontSize={20} />
-            {format(new Date(post.first_publication_date), 'dd MMM yyyy', {
-              locale: ptBR,
-            })}
+            <span className={commonStyles.info}>
+              {format(new Date(post.first_publication_date), 'dd MMM yyyy', {
+                locale: ptBR,
+              })}
+            </span>
             <FiUser fontSize={20} />
-            {post.data.author}
+            <span className={commonStyles.info}>{post.data.author}</span>
             <FiClock fontSize={20} />
-            {getReadTime()} min
+            <span className={commonStyles.info}>{getReadTime()} min</span>
           </span>
 
           <div className={styles.content}>
